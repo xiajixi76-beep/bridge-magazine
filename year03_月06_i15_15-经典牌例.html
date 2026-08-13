@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -454,7 +460,7 @@ const DATA = {
       "desc": "相关故事\n这副牌展示出防守方进行惩罚性加倍有\n时会给自己带来风险。特别是在经验丰富\n的牌手做庄时，防守方进行加倍可能给自\n己带来更大的风险。\n惩罚性加倍会让庄家警觉到防守方牌张\n歪分的情况。\n如果西家一直不参与叫牌，庄家就会按\n敌方♥的一般分布来做庄，而西家有带KQ\n的3张♥时，定约就宕了。\nPhil Abramsohn是上世纪三四十年代的\n顶级牌手之一，也是桥牌终身大师，曾两\n次获得Vanderbilt杯团体冠军。\nAbramsohn曾在早期支持其搭档之一\nSydney Ruainow提出的首攻方法(首攻两张\n连张大牌中的稍小牌)。但是，这个首攻方\n法并未得到北美定约桥牌协会(ACBL)的认\n可，因此在锦标赛中曾被禁止使用。\n不过，这个首攻方法被许多欧洲牌手所\n采用，包括著名的意大利蓝队。\n北美定约桥牌协会(ACBL)从1964年开\n始不再禁止使用这个首攻方法。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -498,17 +504,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -523,9 +526,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

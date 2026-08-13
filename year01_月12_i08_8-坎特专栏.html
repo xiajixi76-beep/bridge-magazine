@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -461,7 +467,7 @@ const DATA = {
       "desc": "你兑现♣K，西家的♣J跌落。\n当你出最后一张♣时，西家用最后一张将牌将吃，击败了定约。\n值得注意的是，即使敌方的♣是3-3分布，东家无法超将吃，你也将面临同样的问题。\n你会在明手出现阻塞，只能用手上的宝贵将牌将吃回手。\n让我们再次复盘看看。\n你用♥2将吃赢进。\n你决定先打♣套，再清将。\n于是，你引小♣到明手的♣A。\n你再从明手出第二轮♣，用手上的♣Q赢进。\n你出小♣，西家跟出小♣时，你已经看到用小♥将吃有风险：\n1. 如果敌方的♣是4-2分布，♥4将被超将吃。\n2. ♥套将出现阻塞，你只能将吃♠回手。\n因此，你需要用♥A将吃！\n东家即使不再有♣，也无法超将吃！\n这时，你已经将剩下的♣树立成赢墩了。\n当然，如果东家这时跟出♣，你仍然可以树立起♣套，甚至都没必要通过将吃树立♣长套。\n你引♥4到手上的♥大牌清将。\n你再出♥K清一轮将牌，东西两家都跟出将牌时，定约就安全了。\n接下来，你出最后一张大将牌清将。\n如果东西两家都跟出将牌，也就意味着，敌方的♥是3-3分布，你将赢得剩下的所有墩。\n实际上，西家跟出将牌，东家将牌告缺。由此可知，敌方的♥是4-2分布，西家还有一张将牌。\n但是，那也没有关系！\n接下来，你兑现♣赢墩，不要去理西家的较大将牌。\n你出♣K，西家的♣J跌落，这是敌方的最后一张♣。\n你兑现♣10，西家可以选择将吃你这个♣赢墩，但是这将是防守方的最后一个赢墩。\n西家攻出♠，你用明手的♠A赢进。\n你用将牌赢得最后一墩，完成了定约，只输了2墩♦和1墩♥。\n总结\n做庄时，除非你别无选择，否则不要依赖敌方的6张牌正好是3-3分布。\n敌方的6张牌是4-2分布的概率较高。因此，你打牌时应该尽可能将这一因素考虑进去。\n在这副牌中，敌方在两个花色上都有6张牌。制定做庄计划时，你就要把敌方在两套上是4-2分布的可能性考虑进去。\n当明手有双张将牌时，你用大将牌将吃可以解封将牌套，同时还可以避免被超将吃。\n如果敌方的♣是3-3分布，♥是4-2分布时，按我们推荐的打法可能会失去超一墩完成定约的机会，但是确保完成定约远比冒险超墩重要得多。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -505,17 +511,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -530,9 +533,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

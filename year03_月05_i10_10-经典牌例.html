@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -418,7 +424,7 @@ const DATA = {
       "desc": "Flint可以接着从明手出♦10，逼出西家\n的♦J，将♦9升级成赢墩。\n因为防守方的♦是3-2分布，所以明手\n剩下的♦都成为赢墩了。\n西家再次攻出♥，Flint赢进。\n然后，Flint通过♣K进到明手，兑现5个\n♦赢墩，再通过♣回手，兑现手上的♣赢\n墩。\n他共赢得2墩♥、6墩♦和3墩♣，超两墩\n完成了定约。\n相关故事\n在世界顶级比赛中出现这样的低级失误\n很不寻常。在一桌上竟然没有计算有效的\n赢墩数，而在另一桌竟然用♦K盖上庄家的\n♦Q，大大地降低了庄家的做庄难度。\n这类失误可能是因为比赛时间长、强度\n大而导致的。\n这也表明即使世界顶级牌手也可能偶尔\n出现失误。\n英国队在半决赛中战胜了瑞典队，但在\n决赛中负于美国队。\n如果当时西家没有用♦K盖上♦Q，英国\n队的Jeremy Flint能发现完成定约的打法\n吗？\n实际上，正是他曾在自己的桥牌书中公\n开了这副牌，并说明了在西家持♦K忍让\n的情况下应该怎样完成这个定约。\nJeremy Flint出生于利兹，曾是一名律\n师，但是不久后成为职业牌手。\nFlint曾代表英国队参加了七次欧洲桥牌\n锦标赛、五次世界桥牌锦标赛、两次世界\n桥牌双人赛，曾获得1963年欧洲桥牌锦标\n赛冠军、1960年奥林匹克世界桥牌团体赛\n银牌及1987年百慕大杯银牌。\n1966年他在对美国的一次延长访问期\n间，与Peter Pender搭档，仅用十周就成为\n桥牌终身大师。\n这个纪录一直保持到1989年，才被\nSabine Auken用八周成为桥牌终身大师的\n纪录所刷新。\nJeremy Flint与Terrence Reese合作开\n发了小高花体系。\n他曾著有一些桥牌书，还曾是泰晤士报\n的桥牌编辑，同时还参与几个广受关注的\n电视桥牌节目。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -462,17 +468,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -487,9 +490,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

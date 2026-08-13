@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -539,7 +545,7 @@ const DATA = {
       "desc": "庄家赢得了剩下的所有墩，但是定约宕一。\n相关故事\n进行防守时，设法树立并兑现赢墩固然重要，但是同样重要的是设法阻止庄家兑现其赢墩。\n在这副牌中，Silodor在第二墩攻出♠K，早早地除掉了明手的进手张。\n为了阻止庄家兑现5个♥赢墩，Silodor牺牲了两个♠赢墩。这样做是很划算的。\n这种为了除掉敌方的致命进手张，而特意牺牲大牌的打法被称为“梅里马克妙招”。\nSidney Silodor是极具天赋的费城桥牌高手之一。\n他原本是一名律师，但是1929年他转行成为专业的桥牌讲师、作家和导师。\n他曾代表北美队赢得1950年的第一届百慕大杯冠军，还曾代表北美队获得另外三次世界冠军。\n他撰写报刊专栏，在《桥牌世界》杂志上发表了许多文章。另外，他还著有《Silodor的话》、《像Silodor那样打定约桥牌》以及《复式桥牌赛全书》。\n他曾获得30余次全国冠军，包括6次雷辛加杯(Reisinger)、3次斯平果而德杯(Spingold)以及8次范德比尔特杯(Vanderbilt)。\n他曾因其年度最高大师得分而获得麦肯尼奖杯，还是赢得大师分的早期领导者。\n在1963年去世前，他是美国桥牌协会董事之一，还是当时的公开双人赛冠军。\n为了向他表示敬意，现在的北美公开双人锦标赛被称为“Silodor双人赛”。\n他还是首批入选“桥牌名人堂”的顶级牌手之一。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -583,17 +589,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -608,9 +611,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

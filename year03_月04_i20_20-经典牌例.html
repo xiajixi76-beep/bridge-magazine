@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -391,7 +397,7 @@ const DATA = {
       "desc": "相关故事\n东家应叫2♣，表示没有4张高花套后，西家没有更好的选择，决定持单张♥大牌再叫3NT。\n如果Pender没有充分的想象力，按最可能的局势进行防守，庄家应该是可以完成定约的。\n看到同伴的首攻，Pender就推断出即使自己用♣A赢进后回攻♦，助同伴赢得3墩♦，也不够击败定约。\n他仔细地研究庄家和同伴的牌张分布情况，就发现树立♥套可能击败定约。\n很少人有勇气看着明手有♥A，却攻出不存在连张的♥K。\n来自加州的Peter Pender才华横溢，曾就读于哈佛大学，是位有成就的钢琴家。\n他还是技艺精湛的花样滑冰运动员，曾参加四次全国单人赛，两次全国双人赛，获得过美国和加拿大花样滑冰冠军。\n他因参加滑冰比赛经常到蒙特利尔。在那里他结识了Hugh Ross，并成为永久的桥牌搭档。\n22岁时，他成为桥牌终身大师。他还曾是1966年度北美桥牌协会最高大师分获胜者，同年他仅用十一周时间就帮助英国的Jeremy Flint成为桥牌终身大师，创下了历史记录。\nPender获得过十多次全国桥牌冠军，还获得了1985年在巴西举办的百慕大杯团体赛冠军以及1989年在澳大利亚举办的百慕大杯银牌。\nPeter Pender与Hugh Ross搭档，再与队友Lou Stansby和Chip Martel组成了1980年代的顶级桥牌队之一。\n他还资助开发了通过大屏幕向广大观众演示叫牌和打牌过程的软件。该软件由Fred Gitelman开发，最早被命名为“Peter Pender Vugraph Theater”并广为人知。\n后来，这款软件发展成为Bridge Base Online Vugraph，目前被数以千计的牌手用来借助于互联网观看重大的桥牌赛事。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -435,17 +441,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -460,9 +463,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

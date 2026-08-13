@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -591,7 +597,7 @@ const DATA = {
       "desc": "相关故事\nCummings用于完成这个定约的打法是“反桌打法”。\n采用这个打法时，不是设法消除手上的所有♦输墩，而是设法消除明手的♥输墩。特别是在已经将吃第一墩后，采用这个打法更加便捷。\n他要面临的第一个挑战是敌方的将牌如何分布。如果是2-2分布，他就可以轻易清光将牌。\nCummings看到敌方在出第一轮将牌时♠忍让，就推断出敌方的♠很可能是3-1分布。\n他要面临的第二个挑战是进手张问题。\n要想两次进到明手，他只得暂时阻塞♣套，稍后再用明手的最后一个将牌赢墩解封♣套。\n他因这副牌上的出色表现而获得该项赛事的最佳牌例奖。\n他还在1980年于法尔肯堡举办的奥林匹克桥牌赛中因其最佳牌例获得“博尔斯精英奖”。\n他发现了完成这个定约的打法。就连世界顶级桥牌评论员通过视频同步看四明手打牌时都评论说这是一个无法打成的定约。\n许多人认为Cummings是澳大利亚有史以来的最佳牌手。他具备极高的道德风范，是许多澳大利亚顶级牌手的楷模和导师。\n他曾多次代表澳大利亚队获得1960年代和1970年代的世界冠军。在1981年百慕大杯期间，他和搭档Seres曾被桥牌专栏作家Alan Truscott称为“世界上最有经验的搭档”。\nCummings撰写了多年世界桥联新闻，还撰写了20多年桥牌日报专栏。\n1980年代，他曾组办过年度Herald盘式桥牌赛，是当时世界上最大的桥牌赛事。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -635,17 +641,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -660,9 +663,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

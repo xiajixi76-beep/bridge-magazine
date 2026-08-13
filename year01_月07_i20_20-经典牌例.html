@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -527,7 +533,7 @@ const DATA = {
       "desc": "Moss出♠A！\n西家在这一墩出♠K，输给了Moss的♠A。\nMoss赢得了剩下的所有墩，完成了满贯定约，只输给♠9一墩。\n相关故事\n这副牌展示出桥牌高手间是如何较量的。\n西家Sandra在用♠9将吃后，考虑到想要用单张♠K赢得一墩，只能寄希望于庄家进行♠飞牌。因此，在庄家当时无法自己进入明手的情况下，Sandra攻出♦给明手机会将吃进手。\nMoss考虑到Sandra Landy这个顶级牌手不可能白送机会，除非她希望从明手进行飞牌。\nLandy计划得很妙，Moss推断得更妙！\n可见，获得世界冠军实属不易！\nGail Moss是纽约的职业牌手。1966年以来，她年年都参加北美桥牌大赛的三次赛事之一。在此期间，她曾获得17次全美冠军，也曾代表美国女子队获得五次世界冠军，其中四次是1976年到1984年间与搭档Jacqui Mitchell共同获得的。2013年她进入美国定约桥牌协会名人堂。\n她还创建了美国最大的两个桥牌俱乐部位于曼哈顿的Honors和位于怀特普莱恩斯的Hartes。此外，她执教桥牌30余年，并完成了4本桥牌著作。\n她的三个孩子Brad Moss、Andrew Moss和Jill Levin也都是杰出的牌手。\nJill Levin曾获得五次世界冠军。Brad Moss曾获得一次世界冠军，还曾获得“1989年度桥牌之王”以及“2010年度牌手”称号。Andrew Moss曾获得“1991年度桥牌之王”称号，还曾获得1995年世界桥牌团体锦标赛青年组冠军。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -571,17 +577,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -596,9 +599,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

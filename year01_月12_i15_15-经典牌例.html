@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -458,7 +464,7 @@ const DATA = {
       "desc": "相关故事\nJourdain出♥10的打法是安全打法。\n敌方的♥是4-1分布时，Jourdain这样出牌最大程度地把♥输墩控制在一墩。\n当西家持单张♥Q、单张♥J、或单张♥9时，以及东家持单张♥9时，Jourdain都可以把♥输墩控制在一墩。\n同时，即使敌方的♥是3-2分布，Jourdain这样出牌也不会损墩。\n要掌握好这个单套打法，需要经过大量的分析和研究。有些专家级牌手都未必能处理恰当。\n事实上，当时在另一桌上，是英格兰队牌手做庄。他就没有处理好♥套，导致满贯定约宕一。\n威尔士队很幸运，Jourdain对于单套打法有着很透彻的分析和研究。\n因为这种情况实属罕见，所以当东家的♥9跌落时，Jourdain都忍不住起来欢呼了！\nPatrick Jourdain曾代表威尔士队参加了50多次国际比赛，参赛次数远超于其他威尔士牌手。在“卡姆罗塞杯”桥牌赛的参赛次数上，他仅次于北爱尔兰的Rex Anderson，位列第二。他曾两次代表苏格兰队参赛。\n他还在加地夫桥牌学校执教。\n1985年，他应英国电视4台之邀担任桥牌新闻记者，为桥牌新闻供稿并为“每周桥牌难题”栏目提供素材。该栏目观众投稿回答桥牌难题，答对题的观众可以抽奖。这项活动一直持续到1992年底。在此期间，Jourdain曾编撰过1000多道桥牌难题。\n自1990年以来，“桥牌难题”成为《英国桥牌》杂志的定期栏目，每月作为广受欢迎的“桥牌难题专栏”刊出。\nJourdain将一些桥牌难题集结成书发表，并著有几本桥牌方面的其他书籍。\n自1992年以来，他还一直担任《每日电报》的桥牌新闻记者。\nJourdain曾任国际桥牌新闻协会（简称为IBPA）总编二十余年。在过去的十三年中，他担任该协会会长，是在该职位任期最长的一位。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -502,17 +508,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -527,9 +530,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -464,7 +470,7 @@ const DATA = {
       "desc": "你用♣A赢得第二墩，西家跟出♣7表示欢迎。\n接下来，你清光将牌，以免树立♦套时被将吃。\n东西两家都跟出将牌。\n由此可知，敌方的将牌是3-3分布。\n这时，你要树立♦套。\n你先兑现♦K，东西两家都跟出了♦。\n由此可知，敌方的♦最差也是3-1分布。\n你再出第二轮♦，西家♦告缺。\n如果西家出♣Q，你可以从明手出小♣让西家赢进。\n因为如果西家赢进后攻♣，你的♣Q可以成为赢墩，所以西家是安全的敌家。\n但是，现在危险的东家赢进了。\n你要保留明手的♦A进手张，以便送出这一墩后还能进到明手树立♦赢墩。\n如果东家不攻♣，你就可以垫掉两个♣输墩。\n但是，东家攻出了♣。\n这时，你应该怎样出牌呢?\n应该出♣3!\n根据叫牌以及到目前为止的出牌，你就可以推断出西家有♣K。\n♣J已经出过，明手有♣9，只要西家没有♣10就只能出♣K赢进。\n西家确实用♣K赢进!\n接下来，你赢得了剩下的所有墩，完成了定约，只输了1墩♠、1墩♦和1墩♣。\n总结\n这副牌中，♣的分布是关键。\n如果庄家领出♣，就会输两墩♣，一墩给西家的♣K，另一墩给东家的♣J或♣10。\n同样，西家只要攻出♣，就会输一墩给庄家的♣Q。\n幸好明手有♣9，东家无法在攻出♣时多赢得一墩。\n如果东家在第二墩攻出♣8，庄家可以跟出小♣，逼出西家的♣K。\n如果东家攻♣J或♣10，庄家可以出♣A，使♣套再次处于谁先动♣套谁损墩的状态。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -508,17 +514,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -533,9 +536,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

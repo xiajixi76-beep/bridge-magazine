@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -449,7 +455,7 @@ const DATA = {
       "desc": "这是当时剩下的四手牌。\n西家能怎样出牌呢？\n如果西家垫掉♦K，明手的♦J将成为赢墩。\n那么，你可以垫掉明手的小♣，最后兑现2墩♣和1墩♦。\n因此，西家才垫掉♣，你就垫掉明手的♦J。\n这样，你可以用♣赢得最后3墩。\n因此，西家并没有垫错牌，而是被挤牌了，只能垫掉一个♦赢墩或一个潜在的♣赢墩。\n相关故事\n在这一桌上，分坐南北的Zia Mahmood和Bob Hamman通过挤牌打成了5♥加倍定约。\nDuboin进行加倍，而Sementa因争叫过♣就没有再叫，也在情理之中。\n本来，偶尔打成被加倍的定约也很正常。\n那我们不妨看看另一桌上的情况吧。\n在另一桌上，分坐南北的是意大利队的Alfredo Versace和Lorenzo Lauria，分坐东西的是美国队的Jeff Meckstroth和Eric Rodwell。\n第一轮叫牌，南家开叫1♥，西家不叫，北家按约定应叫3♦表示限制性加叫或有较好的♥支持，东家争叫3♠。\n第二轮，南家再叫4♥，西家争叫4♠，北家加叫5♥，东家争叫5♠。\n第三轮，南家和西家都不再叫牌，北家加倍。\n其他三家都不叫。叫牌结束。\n东家主打5♠加倍定约。\n南家首攻♥J。\n西家的♥是缺门，东家的♣是缺门。东家可以轻松赢得12墩，只输掉一墩给♦A。\n北家的两个A都无法赢墩。\n因此，在另一桌上，美国队超一墩完成了5♠加倍定约，获得了1050分。\n在这一桌上，美国队完成了5♥加倍定约，获得了650分。因此，美国队在这一副牌上累计获得了1700分。\n这副牌的亮点在于孪生局，也就是南北和东西都能叫到局并能打成局。\n更不寻常的是在两桌上，定约都被加倍了。\n美国队最终击败意大利队，赢得了百慕大杯的绝大部分奖金。\n这是Zia Mahmood第一次赢得百慕大杯，也是他的队友们合作第4次赢得百慕大杯。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -493,17 +499,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -518,9 +521,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

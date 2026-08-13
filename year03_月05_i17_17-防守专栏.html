@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -226,7 +232,7 @@ const DATA = {
       "desc": "当你兑现赢墩时，关键是要想清楚各花色上能有几个赢墩。\n你通常可以从出牌中发现线索。\n在这副牌中，同伴先出♦4，后出♦2。\n实际上这是一个张数信号，表明有5张♦。\n值得注意的是，同伴也需要关注出牌情况。\n当你兑现♦K后，换攻♥时，同伴用♥A赢进后，怎样才能知道应该兑现♥Q而不是♦Q呢？\n如果你持♦K10双张，庄家有单张♥K，同伴就应该兑现♦Q，而不是♥Q。\n你通过换攻♥3，也就是♥套上由大到小的第4张♥，告知同伴形势。\n因为只有一张更小的♥（♥2）还没有出现，同伴知道你最多有5张♥，那样庄家剩下至少一张♥。\n因此，同伴就知道应该兑现♥Q，然后再尝试兑现♦Q。\n如果你第一墩出♦K，庄家就会用♦A赢进，然后引小♦到明手的♦J。\n同伴若用♦Q赢进，下一墩应该怎样攻牌呢？\n同伴不太可能攻出♠，而更可能攻出♥A，寄希望于你有♥K。在庄家可以用明手的♦J垫掉一个♥赢墩之前，同伴希望抢先兑现防守方的♥赢墩。\n要想击败类似的定约，你不仅需要小心地出手上的牌，还需要关注同伴所出的牌。\n第一墩你应该出♦10，而不能出♦K。\n当你兑现♦K时，还要注意到同伴这一墩跟出的是♦2，比首攻的♦4小。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -270,17 +276,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -295,9 +298,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -427,7 +433,7 @@ const DATA = {
       "desc": "同伴攻出♣。\n假设庄家从明手跟出小♣。\n你应该怎样出牌呢？\n与第一墩同理，同伴不会带着♣A攻出小♣。\n如果同伴有♣A，应该先兑现♣A，确保击败定约。\n因此，庄家肯定有♣A。\n你出♣10，庄家用♣A赢进。\n幸好你持♠A忍让很恰当，使庄家无法用明手的♠赢墩垫掉♣输墩。\n庄家最后还要输掉一墩♣。\n当同伴攻♣时，庄家若从明手出♣Q，你可以盖上♣K。那么庄家出完♣A后，仍要输掉一墩♣。\n你最终赢得1墩♠、2墩♦和1墩♣，击败了定约。\n总结\n在这副牌中，你不仅需要利用全部有用的线索，还需要有耐心。\n你从同伴的首攻及稍后的♦出牌，推断出你方将有两个♦赢墩，加上你的♠A这个赢墩，就有3个赢墩了。\n但是，你还需要第4个赢墩才能击败定约。\n同伴也许有一个♥赢墩。但是，如果同伴没有♥赢墩，你需要发展♣赢墩。\n为了阻止庄家发展♠赢墩垫掉♣输墩，你必须持♠A忍让。\n你要按照同伴打出的张数信号，来决定忍让几轮♠。\n如果庄家有两张♠和3张♣，同伴应该按先小后大出牌表示有3张♠。\n那样，你就应该用♠A在第二轮而不是第3轮♠赢进。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -471,17 +477,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -496,9 +499,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -276,7 +282,7 @@ const DATA = {
       "desc": "东家根本不是单张♥，而是3张♥！\n看来，敌方在第一墩出♥Q是骗招，使你偏离了正常的做庄线路。\n相关故事\n在1968年桥牌终身大师双人赛中，只有Gail Greenberg坐东家的那一桌上南北没有打成6♠，其他桌上南北都打成了6♠。\nGail当时意识到如果庄家按一般打法先出♠J清将，自己跟出小♠的情况下，庄家也将跟出小♠防范东家有3张♠，那么防守方只能赢得一墩♠。\n因此，她第一墩出♥Q，致使庄家误以为东家有单张♥。\n庄家会被这个花招骗到吗？\n可能不会。西家首攻♥3，不太可能有7张♥套。\n然而，Gail出♥Q并不损失，只是制造了一个误导庄家的机会。\nGail Greenberg来自纽约，是桥牌世界冠军和桥牌大师。她曾与Jacqui Mitchell搭档代表美国女队获得了5次世界冠军，其中有4次是在1976年到1984年期间获得的。\n她于2013年作为冯泽德维茨奖获得者入选桥牌名人堂。\nGail先后嫁给Steven Shane、Mike Moss和Jack Greenberg。她还是顶级牌手Jill Levin和Brad Moss的母亲。她的家庭堪称“史上卓越的桥牌家庭”之一。\nJill Levin曾获得3次桥牌世界冠军和许多次北美桥牌冠军。\nBrad Moss所在的Flesher队打进美国桥牌锦标赛决赛，争夺代表美国队参加世界桥牌锦标赛的参赛权。\nGail Greenberg曾在1983年加入英国与美国间的电视桥牌比赛。\n她还创建了纽约的Honors桥牌俱乐部，并教授及运营盘式桥牌和复式桥牌。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -320,17 +326,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -345,9 +348,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

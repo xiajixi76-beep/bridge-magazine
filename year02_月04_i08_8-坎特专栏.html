@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -302,7 +308,7 @@ const DATA = {
       "desc": "在这副牌中，你用♦10飞牌成功，西家♦告缺。\n虽然敌方的♦分布对你不利，但是你发展出了这一个♦赢墩，凑足了9个赢墩。\n假设你出♦10飞牌时，西家跟出♦，怎么办呢？\n若西家跟出小♦，那么你就不止可以赢得9墩，而是赢得10墩了。\n因为敌方剩下的两张♦会被你的♦AK击落，所以你的第5张♦将升级成赢墩。\n你甚至还可以尝试进行♠飞牌，力求定约超二。\n假设你出♦10飞牌时，西家用♦J赢进，怎么办呢？\n那也没有关系。\n敌方剩下的两张♦仍会被你的♦AK击落，你总共可以赢得4墩♦，足够完成定约。\n总结\n当东家在第二轮♦时跟出小♦时，你出♦10就可以确保完成定约。\n在这副牌中，为确保完成定约而采用的防范敌方♦歪分的打法是一种“安全打法”。\n如果西家用♦J盖上你的♦10，说明敌方的♦是3-2分布，你就损失了一个潜在的超墩。\n如果不是进行队式赛或盘式桥牌赛，而是打MP赛制比赛时，策略会有不同吗？\n因为所有南北家都会叫到3NT定约，所以你应该忘掉安全打法，而寄希望于用♦大牌击落敌方的♦，力求获得尽可能的赢墩。\n这是大多数庄家会采用的策略。若敌方的♦是3-2分布，你采用安全打法很可能得到最低分。\n当然，在这副牌中，如果你进行♦飞牌，就应该得到最高分。不过，敌方♦是5-1分布的概率并不大。\n如果各庄家都寄希望于用♦大牌击落敌方的♦，定约也都会打宕。\n这类牌例证了MP赛制和IMP赛制的不同。\n因此，你必须了解赛制后再采用相应的打牌策略。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -346,17 +352,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -371,9 +374,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

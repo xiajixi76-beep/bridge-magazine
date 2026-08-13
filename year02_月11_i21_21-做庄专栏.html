@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -493,7 +499,7 @@ const DATA = {
       "desc": "防守方赢得了最后3墩，但是你已经完成了定约。\n你赢得2墩♠、1墩♥、1墩♣和3墩♦共7墩。\n总结\n这是4手牌。\n主打1NT定约通常具有挑战性。\n当你需要赢得7墩，可以承受输掉6墩时，打牌可能变得非常复杂。\n虽然你制定了做庄计划，但是还要处理好各种偶然问题。\n在这副牌中，有多种可能发展♦赢墩。\n比如，东家可能有♦Q、敌方的♦可能是3-3分布，或者如你所见，利用好♦8。\n重要的是你要一直关注♦套的出牌情况，注意中间张（如东家的♦9）的跌落情况。\n在打♦套时，你还应该一直想着叫牌。\n因为东家曾进行技术性加倍，所以你推断东家的♦少。\n如果东家有单张♦Q、单张♦10或单张♦9，你就有机会完成定约。\n在实际打牌中，当东家在第二轮♦告缺时，你用明手的♦8飞牌肯定能成功。\n但是，有些分布会使你很难处理。比如，东家可能有♦109双张。\n当东家的♦10或♦9出现在第二轮♦时，虽然你还可以在第3轮♦时用明手的♦8飞牌。但是，其结果就不确定了。\n东家也可能有带109的3张♦。这种情况下，你从明手出♦A就能发展♦赢墩，而用♦8飞牌就会失败。\n还好，这副牌没有这样难。\n如果东家确实有不止一张♦，你应该按成功概率在第3轮♦时进行飞牌。特别是你已经基于叫牌推断东家的♦少，就更应该飞牌。\n这副牌的另一个亮点是你的叫牌可以止步于1NT。这得益于你此前采用了再加倍。\n如果东家没有加倍，你的叫牌很可能止步于2NT。那样，定约就不容易完成了。\n当敌方防守出色时，你只能赢得7墩。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -537,17 +543,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -562,9 +565,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

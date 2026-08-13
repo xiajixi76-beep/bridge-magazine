@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -376,7 +382,7 @@ const DATA = {
       "desc": "相关故事\n对Mike Lawrence这样的桥牌高手而言，打成这个定约并不难。\n当东家攻♠而没有攻♥时，Lawrence正确地推断出东家有♥K、西家有♠K。\n那么，他出♠A就能确保完成定约。\n如果西家同时有♠K和♥K，Lawrence先出♠A就可以稍后通过♠投入西家。\n如果东家同时有♠K和♥K，Lawrence出♠A也能完成定约。因为东家用♠K赢进后，只得攻♥，Lawrence可以进行♥飞牌。\n事实上，西家有♠K、东家有♥K时，Lawrence同样可以完成定约。\n只有在东家有♠K，西家有♥K时，Lawrence出♠A才无法完成定约。\n但是，在那种情况下，东家在用♦Q赢进后只要攻♥而不攻♠就能击败定约。\n生于旧金山的Mike Lawrence在就读加利福尼亚大学期间酷爱上了桥牌。\n1968年，他应邀加入新成立的达拉斯Aces队。他与Bobby Goldman搭档打二盖一逼局体系。他们曾获得多次北美桥牌锦标赛冠军，并在1970年和1971年击败了蝉联冠军多年的意大利Blue队，为美国赢回百慕大杯。\n在1973年与Jim Jacoby一起离开Aces队后，Lawrence开始教桥牌、著书，并自第一本书《怎样读对手的牌》获得年度著作奖后完成了20多本桥牌著作。\n他促进了二盖一逼局体系的理论，还曾与Fred Gitelman一起帮助开发了桥牌教育软件。\nLawrence不仅曾与Aces队友一起获得世界桥牌冠军，还与Hugh Ross搭档在1987年再次获得百慕大杯。此外，他还曾获得20多次北美桥牌锦标赛冠军。\nLawrence虽然被提名列入ACBL名人堂，但是他以个人原因拒绝，是迄今为止唯一拒绝被列入名人堂的人。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -420,17 +426,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -445,9 +448,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

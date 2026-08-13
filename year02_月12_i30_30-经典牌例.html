@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -583,7 +589,7 @@ const DATA = {
       "desc": "相关故事\n这是四手牌。因为♠和♣飞牌无法成功，敌方的♠又是5-0分布，所以即使看着四明手都很难发现完成4♠合约的打法。\n但是，Zia发现了。\n事实上，幸好敌方的♠是5-0分布，若是4-1分布，西家可以首攻♠，击败合约。\n巴菲特杯桥牌赛始于2006年，是由美国商人沃伦·巴菲特（Warren Buffett)模仿莱德杯（Ryder Cup）高尔夫赛而创办的。\n巴菲特杯桥牌赛安排在莱德杯高尔夫赛前一周，就近莱德杯赛址举办。\n巴菲特杯的参赛队都是从欧洲和美国通过邀请选拔而来的，每个队至少有两位女牌手。\n双方要进行个人赛、双人赛、团体赛，最终累计得分高的一方获得巴菲特杯。\n前四届巴菲特杯的获胜方依次是美国、欧洲、美国、美国。\n这一结果与对应每一届莱德杯高尔夫赛的获胜方（欧洲、美国、欧洲、欧洲）恰好相反。\n因此，Zia在为英国卫报写专栏提到这副牌时，开玩笑说因为美国获得了巴菲特杯，才导致美国没能获得莱德杯。\n实际上，Zia是可以代表欧洲队或美国队参赛的。\n他出生于巴基斯坦，六岁到二十一岁期间在英国受教育，直到2012年还一直为英国卫报写桥牌专栏。\n他是职业牌手，有时生活在英国，有时也在美国生活。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -627,17 +633,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -652,9 +655,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

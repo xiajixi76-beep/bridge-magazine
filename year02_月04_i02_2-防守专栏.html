@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -398,7 +404,7 @@ const DATA = {
       "desc": "总结\n庄家本来有4个♣赢墩和1个♥赢墩。如果你续攻♥，庄家就会有第二个♥赢墩，还需要从♠和♦上再赢得3墩才能完成定约。\n庄家打算在♠和♦的其中一个花色上偷得一墩后，再从另一个花色升级出两个赢墩。\n如果第二墩庄家引小♠到明手的大牌，你就会用♠A赢进。在庄家赢得一墩♦前，你可以抢先树立♥套。\n同理，如果第二墩庄家出♦K或♦Q，你就会用♦A赢进，这时你还有♠A，可以树立♥套。\n庄家很狡猾，先通过♣进到明手，再从明手出♦J，寄希望于你跟出小♦，那样庄家就可以转打♠了。\n即使你用♦A赢进，树立♥套，庄家仍可能设一个骗局，那就是从明手出小♠，而不出♠大牌。\n如果你跟出小♠，庄家就可以用♠J赢进，也就赢得了第9墩。\n你需要第一时间盖上♦A和♠A，才能击败定约。\n想像出同伴有♦Q，可以赢进，再攻出♥抓明手♥Q的防守线路固然美好，但是不适用于这副牌的防守:\n* 你只需要赢得5墩就可以击败定约，并非7墩。\n* 即使同伴确实有♦Q，也可能有单张♥，赢进后也没有♥可攻了。\n讽刺的是，如果你的♥套是较弱的♥QJ1082，会更利于你发现最佳的防守打法。\n那样，你就不会对同伴再攻♥抱有热切的希望，而会第一时间用♦A赢进，趁还有♠A时，逼出定约方的♥大牌。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -442,17 +448,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -467,9 +470,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;

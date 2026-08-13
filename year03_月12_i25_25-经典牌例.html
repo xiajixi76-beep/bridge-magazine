@@ -45,8 +45,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",s
 .bid.heart,.bid.diamond{color:#e74c3c}
 .bid.spade,.bid.club{color:#2c3e50}
 .bid.nt{color:#27ae60}
-.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
-.play-slot{display:flex;justify-content:center;align-items:center}
+.play-area{grid-column:1/-1;grid-row:1/-1;position:relative;min-height:190px}
+.play-slot{position:absolute;display:flex;flex-direction:column;gap:2px;align-items:center}
+.play-slot.n{top:28px;left:50%;transform:translateX(-50%)}
+.play-slot.s{bottom:8px;left:50%;transform:translateX(-50%)}
+.play-slot.w{left:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot.e{right:48px;top:50%;transform:translateY(-50%);flex-direction:row}
+.play-slot .card{opacity:0;animation:dealIn .25s forwards}
+@keyframes dealIn{from{opacity:0;transform:scale(.7) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
 .contract.show{opacity:1}
 .desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
@@ -521,7 +527,7 @@ const DATA = {
       "desc": "接下来按照实际分布，你还将输掉两墩。\n今天幸运女神并不眷顾你，按照实际分布，♣飞牌和♥飞牌都是失败的，而且将牌还是3-1分布。\n那么有没有完成定约的办法？我们来看看Siegfried Klausner是如何完成这个定约的。\nKlausner面对的也是♦首攻。\n有过刚刚的体验，你应该很清楚即便是看着四手牌，也比较难发现完成合约的打法。更何况Klausner只能看到两家的牌呢。\n他用♦A赢进第一墩。\n看出交叉将吃是难以完成合约的，因此他也选择了树立明手♣的打法。\n他先清了一轮将牌。\n然后打♣到明手的♣A。\n然后明手打出♣2，东家跟♣10。这时候他打了一张非常漂亮的牌。\n他选择用♠Q将吃！\n然后Klausner又打了一张至关重要的牌。\n他打了一张♠2！\n他决定让对手的♠J赢得这一墩牌。\n如果♠是2-2分布，让对手赢得这一墩没有任何损失。但是照目前的分布来看，他保证了合约的成功。\n我们继续往下看。\n♠J赢得之后，西家回攻♦Q，逼迫明手将吃。\n然后明手打出♣3，东家跟出♣K。\n他又用♠K将吃！两次用♠大牌将吃给明手留出了充足的进手。\n然后他用♠10进入明手，同时也清掉了西家最后一张将牌。\n明手的♣全部都大了，外加南家的♥A，庄家赢得剩余赢墩。\nKlausner完成了这个不可思议的小满贯，仅输掉一墩将牌。\n桥牌趣闻\nKlausner选择的路线堪称艺术性的打法。除此之外合约没有任何路线能够完成。\n只要♣3-2分布且♠不坏于3-1分布，合约没有任何问题。\nKlausner出生在维也纳，第二次世界大战前他搬到了比弗利山庄（洛杉矶）。\n他的妻子Malvine也是一名杰出的牌手，曾获得奥地利和美国的桥牌冠军。\nKlausner还是塑料扑克牌的发明者。\nKlausner在1932年取得了塑料扑克牌的专利，然后把它卖给了维也纳的Piatnik公司，这是一家从1824年就从事扑克牌生产的公司。\n这家公司直到今天还在从事扑克牌的生产，并用于各项牌类游戏中。\n然而Klausner并不知道扑克牌是如何制造的，以及如何投放到市场当中的。"
     }
   ]
-};;
+};;;
 const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
 let step = 0;
 function cardEl(suit, rank, size) {
@@ -565,17 +571,14 @@ function update() {
   let lastDesc = '点击「下一步」开始';
   if (step > 0) {
     const bidsByPos = {n:[], w:[], e:[], s:[]};
-    const trick = {n:null, w:null, e:null, s:null};
+    const played = {n:[], w:[], e:[], s:[]};
     let contractShown = false;
     for (let i = 0; i < step; i++) {
       const s = DATA.steps[i];
       if (s.type === 'bid') {
         bidsByPos[s.position].push(s);
       } else if (s.type === 'play') {
-        if (trick.n && trick.w && trick.e && trick.s) {
-          trick.n = trick.w = trick.e = trick.s = null;
-        }
-        trick[s.position] = {suit: s.suit, rank: s.rank};
+        played[s.position].push({suit: s.suit, rank: s.rank});
         contractShown = true;
       }
       lastDesc = s.desc;
@@ -590,9 +593,12 @@ function update() {
       });
     });
     ['n','w','e','s'].forEach(p => {
-      if (trick[p]) {
-        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
-      }
+      const slot = document.getElementById('slot' + p.toUpperCase());
+      played[p].forEach((c, idx) => {
+        const card = cardEl(c.suit, c.rank, 'big');
+        card.style.animationDelay = (idx * 0.05) + 's';
+        slot.appendChild(card);
+      });
     });
     if (contractShown) {
       document.getElementById('contract').textContent = DATA.contract;
