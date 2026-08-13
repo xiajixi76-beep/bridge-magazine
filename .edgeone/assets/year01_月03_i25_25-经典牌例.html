@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>25-经典牌例 - 桥艺十分钟年刊01月03</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;background:#8B7355;min-height:100vh;max-width:468px;margin:0 auto;color:#333}
+.header{background:#000;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.header .back,.header .reset{background:none;border:none;color:#fff;cursor:pointer}
+.header .back{font-size:22px;width:32px}
+.header .reset{font-size:14px}
+.header .title{font-size:18px;font-weight:bold}
+.table-area{background:#2d5016;border-radius:8px;padding:12px;margin:10px}
+.hand{display:flex;justify-content:center;gap:2px;flex-wrap:wrap}
+.north-hand{margin-bottom:10px}
+.south-hand{margin-top:10px}
+.card{background:#fff;border-radius:3px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-weight:bold;box-shadow:1px 1px 2px rgba(0,0,0,.3);user-select:none;flex-shrink:0}
+.card.normal{width:34px;height:48px}
+.card.big{width:42px;height:60px}
+.card.heart,.card.diamond{color:#e74c3c}
+.card.spade,.card.club{color:#2c3e50}
+.card .suit{font-size:12px;line-height:1}
+.card .rank{font-size:16px;line-height:1.1}
+.card.big .suit{font-size:14px}
+.card.big .rank{font-size:20px}
+.side-cards{display:flex;flex-direction:column;gap:1px}
+.side-cards .card{width:38px;height:26px;background:linear-gradient(135deg,#e67e22,#d35400);border:1px solid #a04000}
+.table-center{position:relative;display:grid;grid-template-columns:44px 1fr 44px;grid-template-rows:auto 1fr auto;gap:8px;align-items:center;min-height:260px;padding:30px 46px}
+.seat{position:absolute;z-index:9;background:rgba(0,0,0,.5);color:#fff;font-size:12px;font-weight:bold;padding:3px 9px;border-radius:12px;letter-spacing:1px;box-shadow:0 1px 3px rgba(0,0,0,.4);pointer-events:none}
+.seat.n{top:4px;left:50%;transform:translateX(-50%)}
+.seat.s{bottom:4px;left:50%;transform:translateX(-50%)}
+.seat.w{left:4px;top:50%;transform:translateY(-50%)}
+.seat.e{right:4px;top:50%;transform:translateY(-50%)}
+.side-cards.west{grid-column:1;grid-row:2;align-self:center;justify-self:center}
+.side-cards.east{grid-column:3;grid-row:2;align-self:center;justify-self:center}
+.bid-area{display:flex;gap:3px;flex-wrap:wrap;align-items:center;justify-content:center;min-height:24px}
+.bid-area.n{grid-column:2;grid-row:1}
+.bid-area.w{grid-column:1;grid-row:2;flex-direction:column}
+.bid-area.e{grid-column:3;grid-row:2;flex-direction:column}
+.bid-area.s{grid-column:2;grid-row:3}
+.bid{background:#fff;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:bold;box-shadow:1px 1px 2px rgba(0,0,0,.3);white-space:nowrap;opacity:0;transform:scale(.5);transition:all .3s}
+.bid.show{opacity:1;transform:scale(1)}
+.bid.heart,.bid.diamond{color:#e74c3c}
+.bid.spade,.bid.club{color:#2c3e50}
+.bid.nt{color:#27ae60}
+.play-area{grid-column:2;grid-row:2;display:grid;grid-template-areas:". n ." "w c e" ". s .";grid-template-columns:1fr 1.6fr 1fr;grid-template-rows:1fr 1.6fr 1fr;gap:6px;align-self:stretch;min-height:190px}
+.play-slot{display:flex;justify-content:center;align-items:center}
+.contract{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#e74c3c;color:#fff;padding:4px 14px;border-radius:5px;font-size:17px;font-weight:bold;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;margin-top:24px}
+.contract.show{opacity:1}
+.desc{background:#fff;margin:10px;padding:14px;border-radius:8px;font-size:14px;line-height:1.6;min-height:90px}
+.controls{display:flex;justify-content:center;gap:12px;padding:10px}
+.btn{padding:14px 32px;font-size:15px;font-weight:bold;border:none;border-radius:8px;cursor:pointer;color:#fff;flex:1;max-width:160px}
+.btn.prev{background:#888}
+.btn.next{background:#e67e22}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.info{text-align:center;padding:6px 0 14px;color:rgba(255,255,255,.8);font-size:12px}
+.info span{color:#e67e22;font-weight:bold}
+.hint{text-align:center;padding:0 10px 14px;color:rgba(255,255,255,.5);font-size:11px}
+.hint kbd{background:rgba(255,255,255,.15);padding:1px 5px;border-radius:3px;font-size:10px}
+.home-btn{position:fixed;right:14px;bottom:16px;z-index:30;background:#e67e22;color:#fff;text-decoration:none;font-size:14px;font-weight:bold;padding:11px 18px;border-radius:24px;box-shadow:0 3px 10px rgba(0,0,0,.45);display:flex;align-items:center;gap:5px}
+.home-btn:active{transform:scale(.96)}
+</style>
+</head>
+<body>
+<a class="home-btn" href="index.html" title="返回三年年刊主站">⬅ 返回主站</a>
+<div class="header">
+<button class="back" onclick="history.back()">&larr;</button>
+<div class="title">牌例讲解</div>
+<button class="reset" onclick="reset()">重打</button>
+</div>
+<div class="main">
+<div class="table-area">
+<div class="hand north-hand" id="northHand"></div>
+<div class="table-center">
+<div class="seat n">北 N</div>
+<div class="seat w">西 W</div>
+<div class="seat e">东 E</div>
+<div class="seat s">南 S</div>
+<div class="bid-area n" id="bidsN"></div>
+<div class="bid-area w" id="bidsW"></div>
+<div class="bid-area e" id="bidsE"></div>
+<div class="bid-area s" id="bidsS"></div>
+<div class="side-cards west" id="westCards"></div>
+<div class="side-cards east" id="eastCards"></div>
+<div class="play-area">
+<div class="play-slot" id="slotN"></div>
+<div class="play-slot" id="slotW"></div>
+<div class="play-slot" id="slotE"></div>
+<div class="play-slot" id="slotS"></div>
+</div>
+<div class="contract" id="contract"></div>
+</div>
+<div class="hand south-hand" id="southHand"></div>
+</div>
+<div class="desc" id="desc">点击「下一步」开始</div>
+<div class="controls">
+<button class="btn prev" id="prevBtn" onclick="prev()" disabled>上一步</button>
+<button class="btn next" id="nextBtn" onclick="next()">下一步</button>
+</div>
+<div class="info">步骤 <span id="curStep">0</span> / <span id="totalStep">0</span></div>
+<div class="hint"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> 或 <kbd>空格</kbd> 控制 · <kbd>R</kbd> 重置</div>
+</div>
+<script>
+const DATA = {
+  "northHand": {
+    "spade": [
+      "A",
+      "Q",
+      "J"
+    ],
+    "heart": [
+      "T",
+      "4"
+    ],
+    "diamond": [
+      "A",
+      "K",
+      "Q",
+      "4"
+    ],
+    "club": [
+      "K",
+      "6",
+      "2"
+    ]
+  },
+  "southHand": {
+    "spade": [
+      "T",
+      "9",
+      "8",
+      "2"
+    ],
+    "heart": [
+      "K",
+      "6"
+    ],
+    "diamond": [
+      "J",
+      "T",
+      "8",
+      "7",
+      "3"
+    ],
+    "club": [
+      "A",
+      "Q"
+    ]
+  },
+  "contract": "3NT",
+  "steps": [
+    {
+      "type": "bid",
+      "position": "e",
+      "text": "1♦",
+      "desc": "Multon只有10个大牌点，5张♦套。有长套时可能考虑争叫，但是，这个长套花色东家开叫过，因此Multon不叫。"
+    },
+    {
+      "type": "bid",
+      "position": "s",
+      "text": "P",
+      "desc": "Multon只有10个大牌点，5张♦套。有长套时可能考虑争叫，但是，这个长套花色东家开叫过，因此Multon不叫。"
+    },
+    {
+      "type": "bid",
+      "position": "w",
+      "text": "1NT",
+      "desc": "西家应叫1NT，北家不叫，东家加叫到2NT，表示18-19点，均型牌。又轮到Multon叫牌。"
+    },
+    {
+      "type": "bid",
+      "position": "n",
+      "text": "P",
+      "desc": "西家应叫1NT，北家不叫，东家加叫到2NT，表示18-19点，均型牌。又轮到Multon叫牌。"
+    },
+    {
+      "type": "bid",
+      "position": "e",
+      "text": "2NT",
+      "desc": "西家应叫1NT，北家不叫，东家加叫到2NT，表示18-19点，均型牌。又轮到Multon叫牌。"
+    },
+    {
+      "type": "bid",
+      "position": "s",
+      "text": "P",
+      "desc": "Multon没有理由争叫。"
+    },
+    {
+      "type": "bid",
+      "position": "w",
+      "text": "3NT",
+      "desc": "西家接受邀请，叫3NT。北家和东家都不叫，再次轮到Multon叫牌。"
+    },
+    {
+      "type": "bid",
+      "position": "n",
+      "text": "P",
+      "desc": "西家接受邀请，叫3NT。北家和东家都不叫，再次轮到Multon叫牌。"
+    },
+    {
+      "type": "bid",
+      "position": "e",
+      "text": "P",
+      "desc": "西家接受邀请，叫3NT。北家和东家都不叫，再次轮到Multon叫牌。"
+    },
+    {
+      "type": "bid",
+      "position": "s",
+      "text": "P",
+      "desc": "Multon没理由叫牌，叫牌结束。"
+    },
+    {
+      "type": "play",
+      "position": "w",
+      "suit": "heart",
+      "rank": "9",
+      "desc": "很明显，最好是回攻同伴的套。\n你出剩下那张♥，庄家出♥9，同伴用♥J\n赢进。"
+    },
+    {
+      "type": "play",
+      "position": "s",
+      "suit": "heart",
+      "rank": "6",
+      "desc": ""
+    },
+    {
+      "type": "play",
+      "position": "n",
+      "suit": "heart",
+      "rank": "3",
+      "desc": "同伴续攻♥3，明手出♥10。\n你处于防守的关键点。你在这一墩垫掉\n哪张牌呢？\n看起来垫掉一张小♦比较安全。你还有\n止张可以防范明手赢得3墩♦。\n让我们看看你这样垫牌会怎样？"
+    },
+    {
+      "type": "play",
+      "position": "e",
+      "suit": "heart",
+      "rank": "T",
+      "desc": "假定你垫掉一张小♦，庄家用♥A赢得这\n一墩。\n庄家此前一直忍让，以确保你再没有的\n♥了。"
+    },
+    {
+      "type": "play",
+      "position": "s",
+      "suit": "diamond",
+      "rank": "3",
+      "desc": ""
+    },
+    {
+      "type": "play",
+      "position": "w",
+      "suit": "heart",
+      "rank": "A",
+      "desc": ""
+    },
+    {
+      "type": "play",
+      "position": "n",
+      "suit": "club",
+      "rank": "3",
+      "desc": "庄家出小♣，同伴跟出小♣。庄家从明\n手出小♣，让你略感意外。\n你用♣Q赢进。下一墩你怎么出牌呢？"
+    },
+    {
+      "type": "play",
+      "position": "w",
+      "suit": "club",
+      "rank": "4",
+      "desc": ""
+    },
+    {
+      "type": "play",
+      "position": "e",
+      "suit": "club",
+      "rank": "2",
+      "desc": "你想让同伴进手兑现其♥赢墩。但是，\n看来没什么好办法。"
+    },
+    {
+      "type": "play",
+      "position": "s",
+      "suit": "club",
+      "rank": "Q",
+      "desc": ""
+    },
+    {
+      "type": "play",
+      "position": "n",
+      "suit": "diamond",
+      "rank": "5",
+      "desc": "最安全的办法是出♦，至少不会损墩。\n假定你出♦J，庄家和同伴都跟小♦，明\n手的♦Q赢得这一墩。"
+    },
+    {
+      "type": "play",
+      "position": "s",
+      "suit": "diamond",
+      "rank": "J",
+      "desc": ""
+    },
+    {
+      "type": "play",
+      "position": "w",
+      "suit": "diamond",
+      "rank": "2",
+      "desc": ""
+    },
+    {
+      "type": "play",
+      "position": "n",
+      "suit": "diamond",
+      "rank": "A",
+      "desc": "庄家兑现明手的♦A，其他三家都跟了♦\n。\n如果庄家再兑现明手的♦K，你就有两\n个赢墩，即♦10和♣A。"
+    },
+    {
+      "type": "play",
+      "position": "n",
+      "suit": "club",
+      "rank": "6",
+      "desc": "但是，庄家从明手出小♣，再次让你感\n到意外。\n你别无选择，只能用♣A赢进，同伴跟\n出小♣。"
+    },
+    {
+      "type": "play",
+      "position": "s",
+      "suit": "club",
+      "rank": "A",
+      "desc": ""
+    },
+    {
+      "type": "play",
+      "position": "s",
+      "suit": "diamond",
+      "rank": "T",
+      "desc": "你可以通过出♦投入明手。当明手无法\n脱手时，也可能使你的最后一张♦成为赢\n墩。"
+    },
+    {
+      "type": "play",
+      "position": "w",
+      "suit": "spade",
+      "rank": "4",
+      "desc": ""
+    },
+    {
+      "type": "play",
+      "position": "n",
+      "suit": "club",
+      "rank": "K",
+      "desc": "庄家用树立起的明手♣K兑现一墩，你\n垫掉一墩♠，庄家跟了小♣，同伴跟♣J。\n很不幸，庄家此时可以赢得剩下的所有\n墩。他用♠K进手，兑现树立起的♣赢墩，\n完成了定约。"
+    },
+    {
+      "type": "play",
+      "position": "n",
+      "suit": "club",
+      "rank": "J",
+      "desc": "庄家打得很精彩。如果不树立起至少两墩♣，定约是无法完成的。\n因为你的同伴一旦进手就能兑现两个♥赢墩，所以庄家只能寄希望于你有♣A，而且是带♣Q或♣J的双张♣。"
+    },
+    {
+      "type": "play",
+      "position": "s",
+      "suit": "spade",
+      "rank": "2",
+      "desc": ""
+    },
+    {
+      "type": "play",
+      "position": "w",
+      "suit": "club",
+      "rank": "5",
+      "desc": "庄家做庄技巧固然高超，但你是否就无能为力呢？\n让我们来看看Multon是怎样破坏做庄计划的。"
+    },
+    {
+      "type": "play",
+      "position": "n",
+      "suit": "heart",
+      "rank": "5",
+      "desc": "同伴首攻♥5，Multon用♥K赢得第一墩，庄家持♥A忍让。\nMulton回攻♥，庄家再次忍让，同伴用♥J赢进。\n接下来同伴续攻♥3，明手出♥10。\n同伴首攻♥5，这墩出♥3，表示有5张♥套。\n显然庄家要用♥A赢得这一墩，因为如果同伴有♥A，会在这—墩出♥A。\nMulton知道庄家只有这一个♥赢墩，如果同伴能再次进手，就能兑现其已经树立起的两个♥赢墩。\n他能看到庄家只有3个♦赢墩。而且，西家在东家开叫1♦后没有应叫1♠，表明西家最多3张♠。即使庄家很可能有♠K，也只有3个♠赢墩。\n因此，庄家只有7个赢墩，还需要树立两个额外的♣赢墩。Multon有两个♣赢墩，但怎样才能让同伴进手兑现♥赢墩呢？同伴可能的进手张又在哪儿呢？\n唯一的希望是♣！\n如果庄家有♣J，必然能树立♣套。因此，Multon只能寄希望于同伴有♣J。可是，Multon有♣A-Q，同伴怎样才能进手呢？\n庄家可以在♣上输墩给Multon，但不能输墩给Multon的同伴。因此，Multon发现了击败庄家计划的方法。\n他垫掉了♣A。\n庄家用♥A赢进，但庄家无法树立♣套了。\n正如Multon所料，庄家赢得1墩♥、3墩♠和3墩♦，还需要树立2墩♣才能完成定约。\n随着Multon垫掉♣A，明手的♣K升级成了赢墩，但是还差一墩才能完成定约。\n庄家可以输一墩♣给Multon，但是♣套仍树立不起来。\nMulton出大♦，庄家只能让明手赢进。\n庄家可以兑现♣K，寄希望南北家都跟♣，也就可以砸下♣J树立其♣赢墩。\n但是，Multon告缺，庄家知道无法完成定约了。\n庄家还可以兑现♠和♦赢墩，但仅此而已。定约宕一。\n相关故事\n垫掉一个潜在赢墩需要很大勇气。\n但是，Multon做到了，并用唯一的方法击败了定约。他寄希望于同伴的♣足够好，在南家垫掉一个♣赢墩后，能阻止庄家树立♣套。情况正如他所料。\n1964年Multon出生于法国尼斯。他在15岁时就酷爱桥牌胜于学业。Multon在青少年时期就获得了欧洲冠军和世界亚军。\n1996年世界奥林匹克锦标赛、以及法国队第一次夺冠的1997年百慕大杯赛场上，他与队友获得冠军。作为职业牌手，他多年与瑞士房产开发商Zimmerman搭档。Multon、Zimmerman与其他职业牌手组队多次获得世界冠军。Zimmerman于2010年移居摩纳哥，他说服Multon与其他另外4个队友一起移居摩纳哥。他们代表摩纳哥队，在欧洲和世界锦标赛上多次获得银牌和铜牌。"
+    }
+  ]
+};;
+const SS = {spade:'♠', heart:'♥', club:'♣', diamond:'♦'};
+let step = 0;
+function cardEl(suit, rank, size) {
+  const d = document.createElement('div');
+  d.className = 'card ' + suit + ' ' + size;
+  d.innerHTML = '<span class="suit">' + SS[suit] + '</span><span class="rank">' + rank + '</span>';
+  return d;
+}
+function bidClass(text) {
+  if (text.includes('♠')) return 'spade';
+  if (text.includes('♥')) return 'heart';
+  if (text.includes('♦')) return 'diamond';
+  if (text.includes('♣')) return 'club';
+  if (text.includes('NT'))    return 'nt';
+  return '';
+}
+function renderHand(elemId, hand) {
+  const el = document.getElementById(elemId);
+  el.innerHTML = '';
+  ['spade','heart','diamond','club'].forEach(s => {
+    if (hand[s]) hand[s].forEach(r => el.appendChild(cardEl(s, r, 'normal')));
+  });
+}
+function renderSideCards() {
+  ['west','east'].forEach(side => {
+    const el = document.getElementById(side + 'Cards');
+    el.innerHTML = '';
+    for (let i = 0; i < 13; i++) {
+      const c = document.createElement('div');
+      c.className = 'card';
+      el.appendChild(c);
+    }
+  });
+}
+function update() {
+  ['N','W','E','S'].forEach(p => {
+    document.getElementById('bids' + p).innerHTML = '';
+    document.getElementById('slot' + p).innerHTML = '';
+  });
+  document.getElementById('contract').classList.remove('show');
+  let lastDesc = '点击「下一步」开始';
+  if (step > 0) {
+    const bidsByPos = {n:[], w:[], e:[], s:[]};
+    const trick = {n:null, w:null, e:null, s:null};
+    let contractShown = false;
+    for (let i = 0; i < step; i++) {
+      const s = DATA.steps[i];
+      if (s.type === 'bid') {
+        bidsByPos[s.position].push(s);
+      } else if (s.type === 'play') {
+        if (trick.n && trick.w && trick.e && trick.s) {
+          trick.n = trick.w = trick.e = trick.s = null;
+        }
+        trick[s.position] = {suit: s.suit, rank: s.rank};
+        contractShown = true;
+      }
+      lastDesc = s.desc;
+    }
+    ['n','w','e','s'].forEach(p => {
+      const el = document.getElementById('bids' + p.toUpperCase());
+      bidsByPos[p].forEach(b => {
+        const chip = document.createElement('div');
+        chip.className = 'bid show ' + bidClass(b.text);
+        chip.textContent = b.text;
+        el.appendChild(chip);
+      });
+    });
+    ['n','w','e','s'].forEach(p => {
+      if (trick[p]) {
+        document.getElementById('slot' + p.toUpperCase()).appendChild(cardEl(trick[p].suit, trick[p].rank, 'big'));
+      }
+    });
+    if (contractShown) {
+      document.getElementById('contract').textContent = DATA.contract;
+      document.getElementById('contract').classList.add('show');
+    }
+  }
+  document.getElementById('desc').textContent = lastDesc;
+  document.getElementById('curStep').textContent = step;
+  document.getElementById('totalStep').textContent = DATA.steps.length;
+  document.getElementById('prevBtn').disabled = (step === 0);
+  document.getElementById('nextBtn').disabled = (step === DATA.steps.length);
+}
+function next() { if (step < DATA.steps.length) { step++; update(); } }
+function prev() { if (step > 0) { step--; update(); } }
+function reset() { step = 0; update(); }
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  else if (e.key === 'r' || e.key === 'R') reset();
+});
+function init() {
+  renderHand('northHand', DATA.northHand);
+  renderHand('southHand', DATA.southHand);
+  renderSideCards();
+  update();
+}
+init();
+</script>
+</body>
+</html>
